@@ -11,14 +11,16 @@ import (
 	"sync"
 	"time"
 )
+
 var start = time.Now()
-var format  = flag.String("format", "default", "timestamp format")
+var format = flag.String("format", "default", "timestamp format")
 var verbose = flag.Bool("verbose", false, "verbose output")
 var tabs = flag.Bool("tabs", false, "use tabs rather than spaces after the timestamp")
 var utc = flag.Bool("utc", false, "use utc timestamps instead of localtime ones.")
 var millis = flag.Bool("millis", false, "calculate timestamps in milliseconds since program start.")
 
 type TimeFormat int
+
 const (
 	DEFAULT TimeFormat = iota
 	ANSI
@@ -30,11 +32,16 @@ func (tf *TimeFormat) String() string {
 	var res string
 
 	switch *tf {
-	case DEFAULT: res = "2006/01/02 03:04:05"
-	case ANSI: res = time.ANSIC
-	case RFC3339: res = time.RFC3339
-	case RFC3339Nano: res = time.RFC3339Nano
-	default: log.Panicf("Unexpected")
+	case DEFAULT:
+		res = "2006/01/02 03:04:05"
+	case ANSI:
+		res = time.ANSIC
+	case RFC3339:
+		res = time.RFC3339
+	case RFC3339Nano:
+		res = time.RFC3339Nano
+	default:
+		log.Panicf("Unexpected")
 	}
 
 	return res
@@ -44,11 +51,16 @@ func (tf *TimeFormat) fromString(s *string) bool {
 	res := true
 
 	switch *s {
-	case "default": *tf = DEFAULT
-	case "ansi": *tf = ANSI
-	case "rfc3339": *tf = RFC3339
-	case "rfc3339nano": *tf = RFC3339Nano
-	default: res = false
+	case "default":
+		*tf = DEFAULT
+	case "ansi":
+		*tf = ANSI
+	case "rfc3339":
+		*tf = RFC3339
+	case "rfc3339nano":
+		*tf = RFC3339Nano
+	default:
+		res = false
 	}
 
 	return res
@@ -77,26 +89,27 @@ func NewTimestampedWriter(w io.Writer, timeFormat TimeFormat, utc *bool, millis 
 	}
 }
 
-func (tsw *TimestampedWriter) Write(p []byte)(int, error) {
+func (tsw *TimestampedWriter) Write(p []byte) (int, error) {
 	lines := bytes.Split(p, []byte("\n"))
-	last := lines[len(lines) -1]
+	last := lines[len(lines)-1]
 
-	for _, line := range lines[:len(lines) -1] {
+	for _, line := range lines[:len(lines)-1] {
 		var (
 			timestamp string
-			err error
+			err       error
 		)
 
 		now := time.Now()
 		if *millis {
-			timestamp = fmt.Sprintf("%12.3fms", float64(now.Sub(start).Microseconds()) / 1000)
+			timestamp = fmt.Sprintf("%12.3fms", float64(now.Sub(start).Microseconds())/1000)
 		} else {
 			if *utc {
 				now = now.UTC()
 			}
 			timestamp = now.Format(tsw.format)
 		}
-		_, err = tsw.writer.Write([]byte(timestamp)); if err != nil {
+		_, err = tsw.writer.Write([]byte(timestamp))
+		if err != nil {
 			return 0, err
 		}
 
@@ -104,22 +117,26 @@ func (tsw *TimestampedWriter) Write(p []byte)(int, error) {
 		if tsw.tabs {
 			sep = "|\t"
 		}
-		_, err = tsw.writer.Write([]byte(sep)); if err != nil {
+		_, err = tsw.writer.Write([]byte(sep))
+		if err != nil {
 			return 0, err
 		}
 
 		if 0 < len(tsw.incomplete) {
-			_, err = tsw.writer.Write(tsw.incomplete); if err != nil {
+			_, err = tsw.writer.Write(tsw.incomplete)
+			if err != nil {
 				return 0, err
 			}
 		}
 		tsw.incomplete = last
 
-		_, err = tsw.writer.Write(line); if err != nil {
+		_, err = tsw.writer.Write(line)
+		if err != nil {
 			return 0, err
 		}
 
-		_, err = tsw.writer.Write([]byte("\n")); if err != nil {
+		_, err = tsw.writer.Write([]byte("\n"))
+		if err != nil {
 			return 0, err
 		}
 	}
@@ -191,9 +208,9 @@ func init() {
 
 	flag.CommandLine.Usage = func() {
 		output := flag.CommandLine.Output()
-		fmt.Fprintf(output,"ts - run a command with timestamped output\n")
-		fmt.Fprintf(output,"usage:\n  ts [ options ] cmd args...\n")
-		fmt.Fprintf(output,"options:\n")
+		_, _ = fmt.Fprintf(output, "ts - run a command with timestamped output\n\n")
+		_, _ = fmt.Fprintf(output, "usage:\n  ts [ options ] cmd args...\n\n")
+		_, _ = fmt.Fprintf(output, "options:\n")
 		flag.PrintDefaults()
 	}
 }
@@ -204,7 +221,8 @@ func main() {
 		log.Printf("WARNING: -utc will be ignored when -millis is specified.")
 	}
 	var tf TimeFormat
-	ok := tf.fromString(format); if ! ok {
+	ok := tf.fromString(format)
+	if !ok {
 		log.Fatal(fmt.Sprintf("illegal time format identifier: %v", *format))
 	}
 
